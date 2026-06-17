@@ -16,12 +16,12 @@ One `curl`, four possible outcomes:
 curl http://127.0.0.1:<port>/json/version
 ```
 
-| Response | Verdict |
-|---|---|
-| JSON containing `webSocketDebuggerUrl: "ws://..."` | ✅ It's CDP. Hand it to MCP. |
-| `Not Found` / `404` / anything non-JSON | ❌ Not CDP (almost certainly a vendor's Local API port) |
-| `401` / `Unauthorized` | ❌ CDP never requires auth — if it asks for credentials, it's not CDP |
-| `Connection refused` / can't connect | ❌ Browser isn't running, or the port number is wrong |
+| Response                                           | Verdict                                                               |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| JSON containing `webSocketDebuggerUrl: "ws://..."` | ✅ It's CDP. Hand it to MCP.                                          |
+| `Not Found` / `404` / anything non-JSON            | ❌ Not CDP (almost certainly a vendor's Local API port)               |
+| `401` / `Unauthorized`                             | ❌ CDP never requires auth — if it asks for credentials, it's not CDP |
+| `Connection refused` / can't connect               | ❌ Browser isn't running, or the port number is wrong                 |
 
 If MCP reports `Unexpected token 'N', "Not Found" is not valid JSON`, it means MCP got a non-JSON response from `/json/version`. 99% of the time the port points at a vendor management API, not at CDP.
 
@@ -92,10 +92,10 @@ curl http://127.0.0.1:9222/json/version  # should return JSON with webSocketDebu
 
 AdsPower exposes **two different HTTP ports** that are easy to confuse:
 
-| Port | What it is | Use it for MCP? |
-|---|---|---|
-| `50325` (default) | AdsPower **Local API**, the management surface, requires Bearer Token | ❌ Not CDP |
-| Random port assigned each time you start a profile (e.g. `58229`) | The actual Chrome **CDP debug port**, no auth | ✅ Yes |
+| Port                                                              | What it is                                                            | Use it for MCP? |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------- | --------------- |
+| `50325` (default)                                                 | AdsPower **Local API**, the management surface, requires Bearer Token | ❌ Not CDP      |
+| Random port assigned each time you start a profile (e.g. `58229`) | The actual Chrome **CDP debug port**, no auth                         | ✅ Yes          |
 
 The CDP port **changes every time you launch a profile** — you cannot hard-code it. The mandatory flow is: call Local API → launch the profile → read `debug_port` from the response → use it as `--browserUrl`.
 
@@ -208,8 +208,8 @@ exec npx js-reverse-mcp --browserUrl "http://127.0.0.1:${port}"
 
 The shape is similar to AdsPower but port and field names differ. The snippet below is based on BitBrowser's public docs and has **not** been tested in this repo's CI — verify against your actual responses.
 
-| Port | Use |
-|---|---|
+| Port              | Use                                      |
+| ----------------- | ---------------------------------------- |
 | `54345` (default) | BitBrowser Local API (POST + JSON style) |
 
 ### Start a browser and get CDP
@@ -257,13 +257,13 @@ Same caveat — ports change every launch. To automate, adapt the bash script fr
 
 ## General troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `Unexpected token 'N', "Not Found"` | MCP got non-JSON; wrong port | Run `curl /json/version` yourself; almost always you handed MCP a vendor Local API port |
-| `Unexpected token '<', "<!DOCTYPE..."` | Got HTML, wrong port | Same as above |
-| `ECONNREFUSED` | Nothing listening on that port | Browser isn't running, or the port number is wrong |
-| 401 / 403 / `Unauthorized` | The port requires auth | CDP never requires auth — this port is definitely not CDP |
-| `/json/version` works but MCP says `The browser is already running` | You're using MCP's launch mode and your manually launched Chrome owns the default user-data-dir | Use `--browserUrl` mode (this doc), or use `--isolated` |
+| Symptom                                                             | Cause                                                                                           | Fix                                                                                     |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Unexpected token 'N', "Not Found"`                                 | MCP got non-JSON; wrong port                                                                    | Run `curl /json/version` yourself; almost always you handed MCP a vendor Local API port |
+| `Unexpected token '<', "<!DOCTYPE..."`                              | Got HTML, wrong port                                                                            | Same as above                                                                           |
+| `ECONNREFUSED`                                                      | Nothing listening on that port                                                                  | Browser isn't running, or the port number is wrong                                      |
+| 401 / 403 / `Unauthorized`                                          | The port requires auth                                                                          | CDP never requires auth — this port is definitely not CDP                               |
+| `/json/version` works but MCP says `The browser is already running` | You're using MCP's launch mode and your manually launched Chrome owns the default user-data-dir | Use `--browserUrl` mode (this doc), or use `--isolated`                                 |
 
 ---
 

@@ -32,14 +32,14 @@ js-reverse-mcp 的反检测**分层清晰**：包装层（这个 MCP 本身）**
 
 ## 模式对比
 
-| 维度 | 默认模式 | `--cloak` 模式 |
-|---|---|---|
-| 浏览器二进制 | 系统 Google Chrome | CloakBrowser 定制 Chromium（基于 145） |
-| 协议层 stealth | Patchright | Patchright |
-| 源码层 fingerprint patch | 无 | 49 个 C++ patch |
-| Profile 目录 | `~/.cache/chrome-devtools-mcp/chrome-profile` | `~/.cache/chrome-devtools-mcp/cloak-profile`（物理隔离） |
-| Chrome Web Store / Google sync | ✅ | ❌（Chromium 不含 Google 闭源服务） |
-| 反爬通过率 | 中等 | 高（30+ 站点测试通过） |
+| 维度                           | 默认模式                                      | `--cloak` 模式                                           |
+| ------------------------------ | --------------------------------------------- | -------------------------------------------------------- |
+| 浏览器二进制                   | 系统 Google Chrome                            | CloakBrowser 定制 Chromium（基于 145）                   |
+| 协议层 stealth                 | Patchright                                    | Patchright                                               |
+| 源码层 fingerprint patch       | 无                                            | 49 个 C++ patch                                          |
+| Profile 目录                   | `~/.cache/chrome-devtools-mcp/chrome-profile` | `~/.cache/chrome-devtools-mcp/cloak-profile`（物理隔离） |
+| Chrome Web Store / Google sync | ✅                                            | ❌（Chromium 不含 Google 闭源服务）                      |
+| 反爬通过率                     | 中等                                          | 高（30+ 站点测试通过）                                   |
 
 详细对比和 `--cloak` 启用指南：[cloak.md](cloak.md)
 
@@ -54,6 +54,7 @@ js-reverse-mcp 的反检测**分层清晰**：包装层（这个 MCP 本身）**
 **为什么这是关键**：anti-bot 脚本（知乎的 40362、Cloudflare 的挑战、reCAPTCHA 等）在页面加载阶段会**实时探测 CDP 流量**。看到 `Network.requestWillBeSent` 这类事件订阅就直接判定为机器人。延后初始化 = 让风控 JS 跑完、放过你，然后再开调试通道。
 
 涉及代码：
+
 - `src/McpContext.ts:ensureCollectorsInitialized()` —— 延迟初始化入口
 - `src/main.ts` —— 对 `ToolCategory.NAVIGATION` 工具特判，跳过 collectors 初始化
 
@@ -137,11 +138,11 @@ Google reCAPTCHA、FingerprintJS 等高强度反爬会**精确检查这些痕迹
 
 这些泄露在 Patchright、Scrapling 等同类工具中**也同样存在**，不影响通过主流反爬检测：
 
-| 检测项 | 当前值 | 期望值 | 说明 |
-|---|---|---|---|
-| `chrome.runtime` | `undefined` | 应有完整对象 | Chrome 在被 CDP 控制时自动隐藏；cloak binary 也未补 |
-| `chrome.app` | `undefined` | 应有完整对象 | 同上 |
-| `Error.stack` 在 `evaluate()` 调用栈里 | 含 isolated context 标记 | 应是普通栈 | Patchright 隔离世界标记，仅在 evaluate 时可见 |
+| 检测项                                 | 当前值                   | 期望值       | 说明                                                |
+| -------------------------------------- | ------------------------ | ------------ | --------------------------------------------------- |
+| `chrome.runtime`                       | `undefined`              | 应有完整对象 | Chrome 在被 CDP 控制时自动隐藏；cloak binary 也未补 |
+| `chrome.app`                           | `undefined`              | 应有完整对象 | 同上                                                |
+| `Error.stack` 在 `evaluate()` 调用栈里 | 含 isolated context 标记 | 应是普通栈   | Patchright 隔离世界标记，仅在 evaluate 时可见       |
 
 **不要尝试在 JS 层面修复这些** —— 见原则 1。
 

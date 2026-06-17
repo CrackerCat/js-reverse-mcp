@@ -86,7 +86,12 @@ Add optional parameters:
 
 ```ts
 outputFile?: string;
-outputPart?: "all" | "responseBody" | "requestBody" | "queryParams";
+outputPart?:
+  | "all"
+  | "responseHeaders"
+  | "responseBody"
+  | "requestBody"
+  | "queryParams";
 ```
 
 Behavior:
@@ -99,12 +104,13 @@ Behavior:
 
 Output modes:
 
-| `outputPart`     | File content                                                                                                                                                                                              |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `"responseBody"` | Raw response body bytes when available.                                                                                                                                                                   |
-| `"requestBody"`  | Request body bytes/string from the captured request. For GET requests this is usually empty.                                                                                                              |
-| `"queryParams"`  | Pretty JSON object/array representation of parsed URL query parameters.                                                                                                                                   |
-| `"all"`          | Pretty JSON bundle with method, URL, resource type, status, headers, query params, request body metadata, and response body metadata/content. Binary bodies should be base64 encoded in this JSON bundle. |
+| `outputPart`        | File content                                                                                                                                                                                                                                                                              |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"responseHeaders"` | Pretty JSON object with response status, object-shaped response headers, array-shaped response headers preserving repeated entries such as `Set-Cookie`, and extracted `setCookieHeaders`.                                                                                                |
+| `"responseBody"`    | Raw response body bytes when available.                                                                                                                                                                                                                                                   |
+| `"requestBody"`     | Request body bytes/string from the captured request. For GET requests this is usually empty.                                                                                                                                                                                              |
+| `"queryParams"`     | Pretty JSON object/array representation of parsed URL query parameters.                                                                                                                                                                                                                   |
+| `"all"`             | Pretty JSON bundle with method, URL, resource type, status, headers, array-shaped headers preserving repeated entries, extracted `setCookieHeaders`, query params, request body metadata, and response body metadata/content. Binary bodies should be base64 encoded in this JSON bundle. |
 
 GET payload terminology:
 

@@ -16,12 +16,12 @@
 curl http://127.0.0.1:<port>/json/version
 ```
 
-| 返回 | 结论 |
-|---|---|
-| JSON，里面有 `webSocketDebuggerUrl: "ws://..."` | ✅ 就是 CDP，可以直接给 MCP |
-| `Not Found` / `404` / 任何非 JSON | ❌ 这个端口不是 CDP（很可能是某厂商的 Local API） |
-| `401` / `Unauthorized` | ❌ CDP 不要鉴权，能要鉴权的肯定不是 CDP |
-| 连不上 / `Connection refused` | ❌ 浏览器没起来，或端口写错 |
+| 返回                                            | 结论                                              |
+| ----------------------------------------------- | ------------------------------------------------- |
+| JSON，里面有 `webSocketDebuggerUrl: "ws://..."` | ✅ 就是 CDP，可以直接给 MCP                       |
+| `Not Found` / `404` / 任何非 JSON               | ❌ 这个端口不是 CDP（很可能是某厂商的 Local API） |
+| `401` / `Unauthorized`                          | ❌ CDP 不要鉴权，能要鉴权的肯定不是 CDP           |
+| 连不上 / `Connection refused`                   | ❌ 浏览器没起来，或端口写错                       |
 
 任何时候 MCP 报 `Unexpected token 'N', "Not Found" is not valid JSON`，就是 MCP 在 `/json/version` 拿到了非 JSON。99% 是端口指错了厂商管理 API。
 
@@ -92,10 +92,10 @@ curl http://127.0.0.1:9222/json/version  # 应返回包含 webSocketDebuggerUrl 
 
 AdsPower 上有**两个不一样的 HTTP 端口**，初学者常搞混：
 
-| 端口 | 是什么 | 给 MCP 用？ |
-|---|---|---|
-| `50325`（默认） | AdsPower **Local API**，管理面，需要 Bearer Token 认证 | ❌ 不是 CDP |
-| 启动浏览器后动态分配（如 `58229`） | 真正的 Chrome **CDP 调试端口**，无鉴权 | ✅ 给 MCP |
+| 端口                               | 是什么                                                 | 给 MCP 用？ |
+| ---------------------------------- | ------------------------------------------------------ | ----------- |
+| `50325`（默认）                    | AdsPower **Local API**，管理面，需要 Bearer Token 认证 | ❌ 不是 CDP |
+| 启动浏览器后动态分配（如 `58229`） | 真正的 Chrome **CDP 调试端口**，无鉴权                 | ✅ 给 MCP   |
 
 CDP 端口是**每次启动浏览器都随机变**的，不能写死。流程必须是"先调 Local API 启浏览器、从响应里拿 `debug_port`、再用这个端口拼 `--browserUrl`"。
 
@@ -208,8 +208,8 @@ exec npx js-reverse-mcp --browserUrl "http://127.0.0.1:${port}"
 
 接口风格和 AdsPower 类似，但端口、字段名不同。以下基于 BitBrowser 公开文档，未在仓库 CI 中测试过，使用时以你那边实际响应为准。
 
-| 端口 | 用途 |
-|---|---|
+| 端口            | 用途                                     |
+| --------------- | ---------------------------------------- |
 | `54345`（默认） | BitBrowser Local API（POST + JSON 风格） |
 
 ### 启动浏览器拿 CDP
@@ -257,13 +257,13 @@ curl http://127.0.0.1:12345/json/version  # 验证
 
 ## 通用故障排除
 
-| 现象 | 原因 | 怎么办 |
-|---|---|---|
-| `Unexpected token 'N', "Not Found"` | MCP 拿到的不是 JSON，端口不对 | 用 `curl /json/version` 自检；十有八九你把厂商 Local API 端口给 MCP 了 |
-| `Unexpected token '<', "<!DOCTYPE..."` | 拿到的是 HTML，端口不对 | 同上 |
-| `ECONNREFUSED` | 端口没监听 | 浏览器没起来；或者端口号错了 |
-| 401 / 403 / `Unauthorized` | 端口需要鉴权 | CDP 是不鉴权的，这个端口一定不是 CDP |
-| `/json/version` 正常但 MCP 报 `The browser is already running` | 你 MCP 本身在 launch 模式，又恰好你启动的 Chrome 占了默认 user-data-dir | 用 `--browserUrl` 模式（这份文档讲的），或者用 `--isolated` |
+| 现象                                                           | 原因                                                                    | 怎么办                                                                 |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `Unexpected token 'N', "Not Found"`                            | MCP 拿到的不是 JSON，端口不对                                           | 用 `curl /json/version` 自检；十有八九你把厂商 Local API 端口给 MCP 了 |
+| `Unexpected token '<', "<!DOCTYPE..."`                         | 拿到的是 HTML，端口不对                                                 | 同上                                                                   |
+| `ECONNREFUSED`                                                 | 端口没监听                                                              | 浏览器没起来；或者端口号错了                                           |
+| 401 / 403 / `Unauthorized`                                     | 端口需要鉴权                                                            | CDP 是不鉴权的，这个端口一定不是 CDP                                   |
+| `/json/version` 正常但 MCP 报 `The browser is already running` | 你 MCP 本身在 launch 模式，又恰好你启动的 Chrome 占了默认 user-data-dir | 用 `--browserUrl` 模式（这份文档讲的），或者用 `--isolated`            |
 
 ---
 

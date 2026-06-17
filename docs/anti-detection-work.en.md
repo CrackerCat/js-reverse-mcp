@@ -33,14 +33,14 @@ Anti-detection in js-reverse-mcp is **cleanly layered**. The wrapper layer (this
 
 ## Mode Comparison
 
-| Dimension | Default mode | `--cloak` mode |
-|---|---|---|
-| Browser binary | System Google Chrome | CloakBrowser custom Chromium (based on 145) |
-| Protocol-layer stealth | Patchright | Patchright |
-| Source-layer fingerprint patches | None | 49 C++ patches |
-| Profile directory | `~/.cache/chrome-devtools-mcp/chrome-profile` | `~/.cache/chrome-devtools-mcp/cloak-profile` (physically isolated) |
-| Chrome Web Store / Google sync | ✅ | ❌ (Chromium has no Google closed-source services) |
-| Anti-bot bypass rate | Medium | High (passes 30+ detection sites in CloakBrowser's tests) |
+| Dimension                        | Default mode                                  | `--cloak` mode                                                     |
+| -------------------------------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| Browser binary                   | System Google Chrome                          | CloakBrowser custom Chromium (based on 145)                        |
+| Protocol-layer stealth           | Patchright                                    | Patchright                                                         |
+| Source-layer fingerprint patches | None                                          | 49 C++ patches                                                     |
+| Profile directory                | `~/.cache/chrome-devtools-mcp/chrome-profile` | `~/.cache/chrome-devtools-mcp/cloak-profile` (physically isolated) |
+| Chrome Web Store / Google sync   | ✅                                            | ❌ (Chromium has no Google closed-source services)                 |
+| Anti-bot bypass rate             | Medium                                        | High (passes 30+ detection sites in CloakBrowser's tests)          |
 
 Full comparison and `--cloak` guide: [cloak.en.md](cloak.en.md)
 
@@ -55,6 +55,7 @@ During page load, **no CDP domains are activated**. `Network.enable` / `Debugger
 **Why this matters**: anti-bot scripts (Zhihu's 40362, Cloudflare challenges, reCAPTCHA, etc.) **actively probe CDP traffic** during page load. Seeing a `Network.requestWillBeSent` subscription is an instant bot verdict. Deferring initialization = let the risk-control JS run, get through, then open the debugging channel.
 
 Relevant code:
+
 - `src/McpContext.ts:ensureCollectorsInitialized()` — deferred init entry point
 - `src/main.ts` — special-cases `ToolCategory.NAVIGATION` tools, skipping collector init
 
@@ -138,11 +139,11 @@ Test before deleting: "What does this flag actually do at runtime? Would removin
 
 These leaks also exist in Patchright, Scrapling, and similar tools. **They do not break mainstream anti-bot tests**:
 
-| Detection | Current value | Expected | Notes |
-|---|---|---|---|
-| `chrome.runtime` | `undefined` | Should be a full object | Chrome hides this when controlled via CDP; cloak binary doesn't patch it either |
-| `chrome.app` | `undefined` | Same as above | Same |
-| `Error.stack` from `evaluate()` | contains isolated-context markers | Should be a normal stack | Patchright's isolated world marker, only visible in evaluate call stacks |
+| Detection                       | Current value                     | Expected                 | Notes                                                                           |
+| ------------------------------- | --------------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
+| `chrome.runtime`                | `undefined`                       | Should be a full object  | Chrome hides this when controlled via CDP; cloak binary doesn't patch it either |
+| `chrome.app`                    | `undefined`                       | Same as above            | Same                                                                            |
+| `Error.stack` from `evaluate()` | contains isolated-context markers | Should be a normal stack | Patchright's isolated world marker, only visible in evaluate call stacks        |
 
 **Do not try to patch these at the JS level** — see Principle 1.
 

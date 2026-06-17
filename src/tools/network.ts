@@ -37,6 +37,7 @@ const FILTERABLE_RESOURCE_TYPES = [
 
 const NETWORK_EXPORT_PARTS = [
   'all',
+  'responseHeaders',
   'responseBody',
   'requestBody',
   'queryParams',
@@ -101,7 +102,7 @@ export const listNetworkRequests = defineTool({
       .default('all')
       .optional()
       .describe(
-        'Which part to export when outputFile is provided. "responseBody" saves raw response bytes, "requestBody" saves captured request body bytes, "queryParams" saves parsed URL query parameters as JSON, and "all" saves a JSON bundle with metadata, headers, query params, and body content/metadata. Defaults to "all".',
+        'Which part to export when outputFile is provided. "responseHeaders" saves response headers as JSON while preserving repeated headers such as Set-Cookie, "responseBody" saves raw response bytes, "requestBody" saves captured request body bytes, "queryParams" saves parsed URL query parameters as JSON, and "all" saves a JSON bundle with metadata, headers, query params, and body content/metadata. Defaults to "all".',
       ),
   },
   handler: async (request, response, context) => {

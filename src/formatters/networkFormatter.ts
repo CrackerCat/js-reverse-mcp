@@ -16,6 +16,7 @@ const LARGE_REQUEST_BODY_LIMIT = 8192;
 
 export type NetworkExportPart =
   | 'all'
+  | 'responseHeaders'
   | 'responseBody'
   | 'requestBody'
   | 'queryParams';
@@ -24,6 +25,11 @@ interface QueryPayload {
   queryString: string;
   params: Record<string, string | string[]>;
   entries: Array<{name: string; value: string}>;
+}
+
+interface HeaderEntry {
+  name: string;
+  value: string;
 }
 
 type BodySnapshot =
@@ -167,6 +173,30 @@ export async function exportNetworkRequestPart(
   part: NetworkExportPart,
 ): Promise<{data: Uint8Array; summary: string}> {
   switch (part) {
+    case 'responseHeaders': {
+      const httpResponse = await httpRequest.response();
+      if (!httpResponse) {
+        throw new Error('No response is available for this request.');
+      }
+      const responseHeadersArray = await getResponseHeadersArray(httpResponse);
+      const setCookieHeaders = getSetCookieHeaders(responseHeadersArray);
+      const data = jsonBytes({
+        url: httpRequest.url(),
+        status: httpResponse.status(),
+        statusText: httpResponse.statusText(),
+        responseHeaders: headersObjectFromArray(responseHeadersArray),
+        responseHeadersArray,
+        setCookieHeaders,
+      });
+      return {
+        data,
+        summary: `Exported ${responseHeadersArray.length} response header entr${
+          responseHeadersArray.length === 1 ? 'y' : 'ies'
+        } including ${setCookieHeaders.length} Set-Cookie entr${
+          setCookieHeaders.length === 1 ? 'y' : 'ies'
+        } (${data.length} bytes).`,
+      };
+    }
     case 'responseBody': {
       const httpResponse = await httpRequest.response();
       if (!httpResponse) {
@@ -285,8 +315,15 @@ async function getNetworkRequestSnapshot(httpRequest: HTTPRequest) {
   const requestHeaders = await httpRequest
     .allHeaders()
     .catch(() => httpRequest.headers());
+  const requestHeadersArray = await getRequestHeadersArray(httpRequest);
   const responseHeaders = httpResponse
     ? await httpResponse.allHeaders().catch(() => httpResponse.headers())
+    : undefined;
+  const responseHeadersArray = httpResponse
+    ? await getResponseHeadersArray(httpResponse)
+    : undefined;
+  const setCookieHeaders = responseHeadersArray
+    ? getSetCookieHeaders(responseHeadersArray)
     : undefined;
 
   return {
@@ -297,13 +334,60 @@ async function getNetworkRequestSnapshot(httpRequest: HTTPRequest) {
     statusText: httpResponse?.statusText(),
     failure: httpRequest.failure(),
     requestHeaders,
+    requestHeadersArray,
     responseHeaders,
+    responseHeadersArray,
+    setCookieHeaders,
     query,
     requestBody,
     responseBody,
     sizes,
     timing: httpRequest.timing(),
   };
+}
+
+async function getRequestHeadersArray(
+  httpRequest: HTTPRequest,
+): Promise<HeaderEntry[]> {
+  return httpRequest
+    .headersArray()
+    .catch(() => objectToHeaderArray(httpRequest.headers()));
+}
+
+async function getResponseHeadersArray(
+  httpResponse: HTTPResponse,
+): Promise<HeaderEntry[]> {
+  return httpResponse
+    .headersArray()
+    .catch(() => objectToHeaderArray(httpResponse.headers()));
+}
+
+function objectToHeaderArray(headers: Record<string, string>): HeaderEntry[] {
+  return Object.entries(headers).map(([name, value]) => ({name, value}));
+}
+
+function headersObjectFromArray(
+  headersArray: readonly HeaderEntry[],
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const {name, value} of headersArray) {
+    const normalizedName = name.toLowerCase();
+    const existing = result[normalizedName];
+    if (existing === undefined) {
+      result[normalizedName] = value;
+    } else {
+      result[normalizedName] = `${existing}${
+        normalizedName === 'set-cookie' ? '\n' : ', '
+      }${value}`;
+    }
+  }
+  return result;
+}
+
+function getSetCookieHeaders(headersArray: readonly HeaderEntry[]): string[] {
+  return headersArray
+    .filter(({name}) => name.toLowerCase() === 'set-cookie')
+    .map(({value}) => value);
 }
 
 async function readResponseBody(
