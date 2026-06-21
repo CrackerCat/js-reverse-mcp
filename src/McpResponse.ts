@@ -9,6 +9,7 @@ import {AggregatedIssue} from '../node_modules/chrome-devtools-frontend/mcp/mcp.
 import {mapIssueToMessageObject} from './DevtoolsUtils.js';
 import type {ConsoleMessageData} from './formatters/consoleFormatter.js';
 import {
+  formatConsoleArgValue,
   formatConsoleEventShort,
   formatConsoleEventVerbose,
 } from './formatters/consoleFormatter.js';
@@ -257,9 +258,7 @@ export class McpResponse implements Response {
               const stringArg = await arg.jsonValue().catch(() => {
                 // Ignore errors.
               });
-              return typeof stringArg === 'object'
-                ? JSON.stringify(stringArg)
-                : String(stringArg);
+              return formatConsoleArgValue(stringArg);
             }),
           ),
         };
@@ -313,16 +312,7 @@ export class McpResponse implements Response {
                 consoleMessageStableId,
                 type: consoleMessage.type(),
                 message: consoleMessage.text(),
-                args: await Promise.all(
-                  consoleMessage.args().map(async arg => {
-                    const stringArg = await arg.jsonValue().catch(() => {
-                      // Ignore errors.
-                    });
-                    return typeof stringArg === 'object'
-                      ? JSON.stringify(stringArg)
-                      : String(stringArg);
-                  }),
-                ),
+                argCount: consoleMessage.args().length,
               };
             }
             if (item instanceof AggregatedIssue) {

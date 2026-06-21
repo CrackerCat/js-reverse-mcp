@@ -13,15 +13,19 @@ export interface ConsoleMessageData {
   message?: string;
   count?: number;
   description?: string;
+  argCount?: number;
   args?: string[];
 }
+
+const CONSOLE_ARG_SIZE_LIMIT = 2000;
+const CONSOLE_MESSAGE_SIZE_LIMIT = 1000;
 
 // The short format for a console message, based on a previous format.
 export function formatConsoleEventShort(msg: ConsoleMessageData): string {
   if (msg.type === 'issue') {
-    return `msgid=${msg.consoleMessageStableId} [${msg.type}] ${msg.message} (count: ${msg.count})`;
+    return `msgid=${msg.consoleMessageStableId} [${msg.type}] ${getSizeLimitedString(msg.message ?? '', CONSOLE_MESSAGE_SIZE_LIMIT)} (count: ${msg.count})`;
   }
-  return `msgid=${msg.consoleMessageStableId} [${msg.type}] ${msg.message} (${msg.args?.length ?? 0} args)`;
+  return `msgid=${msg.consoleMessageStableId} [${msg.type}] ${getSizeLimitedString(msg.message ?? '', CONSOLE_MESSAGE_SIZE_LIMIT)} (${msg.argCount ?? msg.args?.length ?? 0} args)`;
 }
 
 function getArgs(msg: ConsoleMessageData) {
@@ -40,14 +44,22 @@ export function formatConsoleEventVerbose(msg: ConsoleMessageData): string {
   const aggregatedIssue = msg.item;
   const result = [
     `ID: ${msg.consoleMessageStableId}`,
-    `Message: ${msg.type}> ${aggregatedIssue ? formatIssue(aggregatedIssue, msg.description) : msg.message}`,
+    `Message: ${msg.type}> ${aggregatedIssue ? formatIssue(aggregatedIssue, msg.description) : getSizeLimitedString(msg.message ?? '', CONSOLE_MESSAGE_SIZE_LIMIT)}`,
     aggregatedIssue ? undefined : formatArgs(msg),
   ].filter(line => !!line);
   return result.join('\n');
 }
 
-function formatArg(arg: unknown) {
-  return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+export function formatConsoleArgValue(arg: unknown): string {
+  const value = typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+  return getSizeLimitedString(value, CONSOLE_ARG_SIZE_LIMIT);
+}
+
+function getSizeLimitedString(text: string, sizeLimit: number): string {
+  if (text.length > sizeLimit) {
+    return `${text.slice(0, sizeLimit)}... <truncated ${text.length - sizeLimit} chars>`;
+  }
+  return text;
 }
 
 function formatArgs(consoleData: ConsoleMessageData): string {
@@ -60,7 +72,9 @@ function formatArgs(consoleData: ConsoleMessageData): string {
   const result = ['### Arguments'];
 
   for (const [key, arg] of args.entries()) {
-    result.push(`Arg #${key}: ${formatArg(arg)}`);
+    result.push(
+      `Arg #${key}: ${getSizeLimitedString(String(arg), CONSOLE_ARG_SIZE_LIMIT)}`,
+    );
   }
 
   return result.join('\n');
